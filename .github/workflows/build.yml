@@ -1,0 +1,37 @@
+name: build
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Unpack project
+        shell: pwsh
+        run: Expand-Archive -Path asterius.zip -DestinationPath . -Force
+
+      - name: Install dependencies
+        working-directory: asterius
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-build.txt
+
+      - name: Build exe
+        working-directory: asterius
+        run: pyinstaller --noconfirm --onefile --windowed --name ASTERIUS --collect-all customtkinter asterius.py
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASTERIUS-windows
+          path: asterius/dist/ASTERIUS.exe
+          if-no-files-found: error
+          
